@@ -23,7 +23,7 @@ except ImportError:
 CLICK_DIR = click.Path(exists=True, dir_okay=True, resolve_path=True)
 
 
-def get_extra_params(odoo_version):
+def get_extra_params(odoo_version, disable_pylint=None):
     """Get extra pylint params by odoo version
     Transform a seudo-pylint-conf to params,
     it to overwrite base-pylint-conf values.
@@ -72,6 +72,9 @@ def get_extra_params(odoo_version):
     if is_version_number:
         extra_params.extend([
             '--extra-params', '--valid_odoo_versions=%s' % odoo_version])
+    if disable_pylint:
+        extra_params.extend([
+            '--extra-params', '--disable=%s' % disable_pylint])
 
     odoo_version = odoo_version.replace('.', '')
     version_cfg = os.path.join(
@@ -156,10 +159,11 @@ def pylint_run(is_pr, version, dir):
         os.path.dirname(os.path.realpath(__file__)),
         'cfg', "travis_run_pylint_pr.cfg")
     odoo_version = version_validate(version, dir)
+    disable_pylint = os.environ.get('DISABLE_PYLINT')
     modules_cmd = get_modules_cmd(dir)
     beta_msgs = get_beta_msgs()
     branch_base = get_branch_base()
-    extra_params_cmd = get_extra_params(odoo_version)
+    extra_params_cmd = get_extra_params(odoo_version, disable_pylint)
     extra_info = "extra_params_cmd %s " % extra_params_cmd
     print (extra_info)
     conf = ["--config-file=%s" % (pylint_rcfile)]
