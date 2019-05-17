@@ -83,7 +83,7 @@ def get_extra_params(odoo_version, disable_pylint=None):
     params = []
     if os.path.isfile(version_cfg):
         config = ConfigParser.ConfigParser()
-        config.readfp(open(version_cfg))
+        config.read_file(open(version_cfg))
         for section in config.sections():
             for option, value in config.items(section):
                 params.extend(['--' + option, value])
@@ -104,12 +104,21 @@ def get_beta_msgs():
         'cfg/travis_run_pylint_beta.cfg')
     if not os.path.isfile(beta_cfg):
         return []
+    enable_checks_addons_dev_pr = []
     config = ConfigParser.ConfigParser()
-    config.readfp(open(beta_cfg))
-    return [
-        msg.strip()
-        for msg in config.get('MESSAGES CONTROL', 'enable').split(',')
-        if msg.strip()]
+    config.read_file(open(beta_cfg))
+    enable_checks = [msg.strip() for msg in config.get('MESSAGES CONTROL', 'enable').split(',') if msg.strip()]
+    travis_pull_request_slug = os.environ.get('TRAVIS_PULL_REQUEST_SLUG')
+    is_PR = os.environ.get('TRAVIS_PULL_REQUEST')
+    find_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
+    if find_addons_dev and is_PR:
+        beta_cfg_addons_dev_html = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            'cfg/travis_run_pylint_beta_addons_dev.cfg')
+        config.read_file(open(beta_cfg_addons_dev_html))
+        enable_checks_addons_dev_pr = [msg.strip() for msg in config.get('MESSAGES CONTROL', 'enable').split(',') if msg.strip()]
+    list_enable_checks = enable_checks + enable_checks_addons_dev_pr
+    return list_enable_checks
 
 
 def get_modules_cmd(dir):
