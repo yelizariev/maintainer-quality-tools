@@ -104,21 +104,26 @@ def get_beta_msgs():
         'cfg/travis_run_pylint_beta.cfg')
     if not os.path.isfile(beta_cfg):
         return []
-    enable_checks_addons_dev_pr = []
     config = ConfigParser.ConfigParser()
     config.readfp(open(beta_cfg))
-    enable_checks = [msg.strip() for msg in config.get('MESSAGES CONTROL', 'enable').split(',') if msg.strip()]
-    travis_pull_request_slug = os.environ.get('TRAVIS_PULL_REQUEST_SLUG')
-    is_PR = os.environ.get('TRAVIS_PULL_REQUEST')
-    find_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
-    if find_addons_dev and is_PR:
-        beta_cfg_addons_dev_html = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            'cfg/travis_run_pylint_beta_addons_dev.cfg')
-        config.readfp(open(beta_cfg_addons_dev_html))
-        enable_checks_addons_dev_pr = [msg.strip() for msg in config.get('MESSAGES CONTROL', 'enable').split(',') if msg.strip()]
-    list_enable_checks = enable_checks + enable_checks_addons_dev_pr
+    list_enable_checks = [msg.strip() for msg in config.get('MESSAGES CONTROL', 'enable').split(',') if msg.strip()]
     return list_enable_checks
+
+
+def get_beta_msgs_addons_dev_pr():
+    """Get beta msgs from beta.cfg file
+    :return: List of strings with beta message names"""
+    beta_cfg_addons_dev_pr = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'cfg/travis_run_pylint_addons_dev_beta_pr.cfg')
+    if not os.path.isfile(beta_cfg_addons_dev_pr):
+        return []
+    config = ConfigParser.ConfigParser()
+    enable_checks = get_beta_msgs()
+    config.readfp(open(beta_cfg_addons_dev_pr))
+    enable_checks_addons_dev_pr = [msg.strip() for msg in config.get('MESSAGES CONTROL', 'enable').split(',') if msg.strip()]
+    list_enable_checks_addons_dev_pr = enable_checks + enable_checks_addons_dev_pr
+    return list_enable_checks_addons_dev_pr
 
 
 def get_modules_cmd(dir):
@@ -199,6 +204,10 @@ def pylint_run(is_pr, version, dir):
             modules_changed_cmd.extend(['--path', module_changed])
         conf = ["--config-file=%s" % (pylint_rcfile_pr)]
         cmd = conf + modules_changed_cmd + extra_params_cmd
+        travis_pull_request_slug = os.environ.get('TRAVIS_PULL_REQUEST_SLUG')
+        find_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
+        if find_addons_dev:
+            beta_msgs = get_beta_msgs_addons_dev_pr()
         pr_real_errors = main(cmd, standalone_mode=False)
         pr_stats = dict(
             (key, value) for key, value in (pr_real_errors.get(
