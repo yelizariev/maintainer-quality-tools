@@ -63,8 +63,7 @@ def get_extra_params(odoo_version, disable_pylint=None, is_addons_dev=None, is_p
     is_version_number = re.match(r'\d+\.\d+', odoo_version)
     beta_msgs = get_beta_msgs()
     if is_addons_dev and is_pr:
-        beta_msgs_addons_dev = get_beta_msgs_addons_dev_pr()
-        beta_msgs = beta_msgs_addons_dev + beta_msgs
+        beta_msgs += get_beta_msgs_addons_dev_pr()
     extra_params_cmd = [
         '--sys-paths', os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
@@ -209,8 +208,7 @@ def pylint_run(is_pr, version, dir):
         extra_params_cmd = get_extra_params(odoo_version, disable_pylint, is_addons_dev, is_pr)
         cmd = conf + modules_changed_cmd + extra_params_cmd
         if is_addons_dev:
-            beta_msgs_addons_dev = get_beta_msgs_addons_dev_pr()
-            beta_msgs = beta_msgs_addons_dev + beta_msgs
+            beta_msgs += get_beta_msgs_addons_dev_pr()
         pr_real_errors = main(cmd, standalone_mode=False)
         pr_stats = dict(
             (key, value) for key, value in (pr_real_errors.get(
