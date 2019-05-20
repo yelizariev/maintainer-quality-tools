@@ -63,7 +63,8 @@ def get_extra_params(odoo_version, disable_pylint=None, find_addons_dev=None):
     is_version_number = re.match(r'\d+\.\d+', odoo_version)
     beta_msgs = get_beta_msgs()
     if find_addons_dev:
-        beta_msgs = get_beta_msgs() + beta_msgs
+        beta_msgs_addons_dev = get_beta_msgs_addons_dev_pr()
+        beta_msgs = beta_msgs_addons_dev + beta_msgs
     extra_params_cmd = [
         '--sys-paths', os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
@@ -177,9 +178,7 @@ def pylint_run(is_pr, version, dir):
     modules_cmd = get_modules_cmd(dir)
     beta_msgs = get_beta_msgs()
     branch_base = get_branch_base()
-    travis_pull_request_slug = os.environ.get('TRAVIS_PULL_REQUEST_SLUG')
-    find_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
-    extra_params_cmd = get_extra_params(odoo_version, disable_pylint, find_addons_dev)
+    extra_params_cmd = get_extra_params(odoo_version, disable_pylint)
     extra_info = "extra_params_cmd %s " % extra_params_cmd
     print (extra_info)
     conf = ["--config-file=%s" % (pylint_rcfile)]
@@ -205,9 +204,13 @@ def pylint_run(is_pr, version, dir):
         for module_changed in modules_changed:
             modules_changed_cmd.extend(['--path', module_changed])
         conf = ["--config-file=%s" % (pylint_rcfile_pr)]
+        travis_pull_request_slug = os.environ.get('TRAVIS_PULL_REQUEST_SLUG')
+        find_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
+        extra_params_cmd = get_extra_params(odoo_version, disable_pylint, find_addons_dev)
         cmd = conf + modules_changed_cmd + extra_params_cmd
         if find_addons_dev:
-            beta_msgs = get_beta_msgs_addons_dev_pr() + beta_msgs
+            beta_msgs_addons_dev = get_beta_msgs_addons_dev_pr()
+            beta_msgs = beta_msgs_addons_dev + beta_msgs
         pr_real_errors = main(cmd, standalone_mode=False)
         pr_stats = dict(
             (key, value) for key, value in (pr_real_errors.get(
