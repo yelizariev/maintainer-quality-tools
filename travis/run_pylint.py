@@ -23,7 +23,7 @@ except ImportError:
 CLICK_DIR = click.Path(exists=True, dir_okay=True, resolve_path=True)
 
 
-def get_extra_params(odoo_version, disable_pylint=None):
+def get_extra_params(odoo_version, disable_pylint=None, find_addons_dev=None):
     """Get extra pylint params by odoo version
     Transform a seudo-pylint-conf to params,
     it to overwrite base-pylint-conf values.
@@ -62,6 +62,8 @@ def get_extra_params(odoo_version, disable_pylint=None):
     """
     is_version_number = re.match(r'\d+\.\d+', odoo_version)
     beta_msgs = get_beta_msgs()
+    if find_addons_dev:
+        beta_msgs = get_beta_msgs() + beta_msgs
     extra_params_cmd = [
         '--sys-paths', os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
@@ -119,10 +121,8 @@ def get_beta_msgs_addons_dev_pr():
     if not os.path.isfile(beta_cfg_addons_dev_pr):
         return []
     config = ConfigParser.ConfigParser()
-    enable_checks = get_beta_msgs()
     config.readfp(open(beta_cfg_addons_dev_pr))
-    enable_checks_addons_dev_pr = [msg.strip() for msg in config.get('MESSAGES CONTROL', 'enable').split(',') if msg.strip()]
-    list_enable_checks_addons_dev_pr = enable_checks + enable_checks_addons_dev_pr
+    list_enable_checks_addons_dev_pr = [msg.strip() for msg in config.get('MESSAGES CONTROL', 'enable').split(',') if msg.strip()]
     return list_enable_checks_addons_dev_pr
 
 
@@ -177,7 +177,9 @@ def pylint_run(is_pr, version, dir):
     modules_cmd = get_modules_cmd(dir)
     beta_msgs = get_beta_msgs()
     branch_base = get_branch_base()
-    extra_params_cmd = get_extra_params(odoo_version, disable_pylint)
+    travis_pull_request_slug = os.environ.get('TRAVIS_PULL_REQUEST_SLUG')
+    find_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
+    extra_params_cmd = get_extra_params(odoo_version, disable_pylint, find_addons_dev)
     extra_info = "extra_params_cmd %s " % extra_params_cmd
     print (extra_info)
     conf = ["--config-file=%s" % (pylint_rcfile)]
@@ -204,10 +206,8 @@ def pylint_run(is_pr, version, dir):
             modules_changed_cmd.extend(['--path', module_changed])
         conf = ["--config-file=%s" % (pylint_rcfile_pr)]
         cmd = conf + modules_changed_cmd + extra_params_cmd
-        travis_pull_request_slug = os.environ.get('TRAVIS_PULL_REQUEST_SLUG')
-        find_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
         if find_addons_dev:
-            beta_msgs = get_beta_msgs_addons_dev_pr()
+            beta_msgs = get_beta_msgs_addons_dev_pr() + beta_msgs
         pr_real_errors = main(cmd, standalone_mode=False)
         pr_stats = dict(
             (key, value) for key, value in (pr_real_errors.get(
