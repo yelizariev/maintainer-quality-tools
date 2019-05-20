@@ -23,7 +23,7 @@ except ImportError:
 CLICK_DIR = click.Path(exists=True, dir_okay=True, resolve_path=True)
 
 
-def get_extra_params(odoo_version, disable_pylint=None, find_addons_dev=None):
+def get_extra_params(odoo_version, disable_pylint=None, is_addons_dev=None, is_pr=False):
     """Get extra pylint params by odoo version
     Transform a seudo-pylint-conf to params,
     it to overwrite base-pylint-conf values.
@@ -62,7 +62,7 @@ def get_extra_params(odoo_version, disable_pylint=None, find_addons_dev=None):
     """
     is_version_number = re.match(r'\d+\.\d+', odoo_version)
     beta_msgs = get_beta_msgs()
-    if find_addons_dev:
+    if is_addons_dev and is_pr:
         beta_msgs_addons_dev = get_beta_msgs_addons_dev_pr()
         beta_msgs = beta_msgs_addons_dev + beta_msgs
     extra_params_cmd = [
@@ -205,10 +205,10 @@ def pylint_run(is_pr, version, dir):
             modules_changed_cmd.extend(['--path', module_changed])
         conf = ["--config-file=%s" % (pylint_rcfile_pr)]
         travis_pull_request_slug = os.environ.get('TRAVIS_PULL_REQUEST_SLUG')
-        find_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
-        extra_params_cmd = get_extra_params(odoo_version, disable_pylint, find_addons_dev)
+        is_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
+        extra_params_cmd = get_extra_params(odoo_version, disable_pylint, is_addons_dev, is_pr)
         cmd = conf + modules_changed_cmd + extra_params_cmd
-        if find_addons_dev:
+        if is_addons_dev:
             beta_msgs_addons_dev = get_beta_msgs_addons_dev_pr()
             beta_msgs = beta_msgs_addons_dev + beta_msgs
         pr_real_errors = main(cmd, standalone_mode=False)
