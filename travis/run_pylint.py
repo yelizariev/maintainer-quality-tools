@@ -7,6 +7,7 @@ import ast
 import os
 import re
 import sys
+import inspect
 
 import click
 import pylint.lint
@@ -26,9 +27,9 @@ CLICK_DIR = click.Path(exists=True, dir_okay=True, resolve_path=True)
 def get_extra_params(odoo_version, disable_pylint=None, is_addons_dev=None, is_pr=False):
     """Get extra pylint params by odoo version
     Transform a seudo-pylint-conf to params,
-    it to overwrite base-pylint-conf values.
+    to overwrite base-pylint-conf values.
     Use a seudo-inherit of configuration file.
-    To avoid have a 2 config files (stable and pr-conf) by each odoo-version
+    To avoid having 2 config files (stable and pr-conf) by each odoo-version
     Example:
 
         pylint_master.conf
@@ -43,8 +44,8 @@ def get_extra_params(odoo_version, disable_pylint=None, is_addons_dev=None, is_p
         pylint_61_pr.conf
         ... and new future versions.
 
-    If you need add a new conventions in all versions
-    you will need change all pr files or stables files.
+    If you need to add new conventions in all versions,
+    you will need to change all pr files or stable files.
 
 
     With this method you can use:
@@ -54,10 +55,10 @@ def get_extra_params(odoo_version, disable_pylint=None, is_addons_dev=None, is_p
         pylint_disabling_70.conf <- Overwrite params of pylint_lastest*.conf
         pylint_disabling_61.conf <- Overwrite params of pylint_lastest*.conf
 
-    If you need add a new conventions in all versions you will need change just
-    pylint_lastest_pr.conf or pylint_lastest.conf, similar to inherit.
+    If you need to add new conventions in all versions, you will only need to
+    change pylint_lastest_pr.conf or pylint_lastest.conf, similar to inherit.
 
-    :param version: String with name of version of odoo
+    :param version: String to specify an Odoo's name or versio
     :return: List of extra pylint params
     """
     is_version_number = re.match(r'\d+\.\d+', odoo_version)
@@ -145,7 +146,7 @@ def version_validate(version, dir):
                    if branch_name else False)
         version = version[0] if version else None
     if not version:
-        print (travis_helpers.yellow(
+        print(travis_helpers.yellow(
             'Undefined environment variable'
             ' `VERSION`.\nSet `VERSION` for '
             'compatibility with guidelines by version.'))
@@ -179,7 +180,7 @@ def pylint_run(is_pr, version, dir):
     branch_base = get_branch_base()
     extra_params_cmd = get_extra_params(odoo_version, disable_pylint)
     extra_info = "extra_params_cmd %s " % extra_params_cmd
-    print (extra_info)
+    print(extra_info)
     conf = ["--config-file=%s" % (pylint_rcfile)]
     cmd = conf + modules_cmd + extra_params_cmd
 
@@ -189,10 +190,10 @@ def pylint_run(is_pr, version, dir):
             'by_msg') or {}).items() if key not in beta_msgs)
     count_errors = get_count_fails(real_errors, list(beta_msgs))
     count_info = "count_errors %s" % count_errors
-    print (count_info)
+    print(count_info)
     if is_pr:
         print(travis_helpers.green(
-            'Start lint check just in modules changed'))
+            'Starting lint check only for modules changed'))
         modules_changed = get_modules_changed(dir, branch_base)
         if not modules_changed:
             print(travis_helpers.green(
@@ -215,7 +216,7 @@ def pylint_run(is_pr, version, dir):
                 'by_msg') or {}).items() if key not in beta_msgs)
         if pr_stats:
             pr_errors = get_count_fails(pr_real_errors, list(beta_msgs))
-            print (travis_helpers.yellow(
+            print(travis_helpers.yellow(
                 "Found %s errors in modules changed." % (pr_errors)))
             if pr_errors < 0:
                 res = pr_stats
@@ -243,7 +244,7 @@ def get_count_fails(linter_stats, msgs_no_count=None):
 
 def is_installable_module(path):
     """return False if the path doesn't contain an installable odoo module,
-    and the full path to the module manifest otherwise"""
+    otherwise the full path to the module's manifest"""
     manifest_path = is_module(path)
     if manifest_path:
         manifest = ast.literal_eval(open(manifest_path).read())
@@ -254,7 +255,7 @@ def is_installable_module(path):
 
 def get_subpaths(paths, depth=1):
     """Get list of subdirectories
-    if `__init__.py` file not exists in root path then
+    if `__init__.py` file doesn't exists in root path, then
     get subdirectories.
     Why? More info here:
         https://www.mail-archive.com/code-quality@python.org/msg00294.html
@@ -280,10 +281,10 @@ def get_subpaths(paths, depth=1):
 
 def run_pylint(paths, cfg, beta_msgs=None, sys_paths=None, extra_params=None):
     """Execute pylint command from original python library
-    :param paths: List of paths of python modules to check pylint
+    :param paths: List of paths of python modules to check with pylint
     :param cfg: String name of pylint configuration file
     :param sys_paths: List of paths to append to sys path
-    :param extra_params: List of parameters extra to append
+    :param extra_params: List of extra parameters to append
         in pylint command
     :return: Dict with python linter stats
     """
@@ -297,8 +298,17 @@ def run_pylint(paths, cfg, beta_msgs=None, sys_paths=None, extra_params=None):
     subpaths = get_subpaths(paths)
     if not subpaths:
         raise UserWarning("Python modules not found in paths %s" % (paths))
+    exclude = os.environ.get('EXCLUDE', '').split(',')
+    subpaths = [path for path in subpaths
+                if os.path.basename(path) not in exclude]
+    if not subpaths:
+        return {'error': 0}
     cmd.extend(subpaths)
-    pylint_res = pylint.lint.Run(cmd, exit=False)
+    if 'do_exit' in inspect.getargspec(pylint.lint.Run.__init__)[0]:
+        # pylint has renamed this keyword argument
+        pylint_res = pylint.lint.Run(cmd, do_exit=False)
+    else:
+        pylint_res = pylint.lint.Run(cmd, exit=False)
     return pylint_res.linter.stats
 
 
@@ -323,7 +333,7 @@ def main(paths, config_file, msgs_no_count=None,
     """Script to run pylint command with additional params
     to check fails of odoo modules.
     If expected errors is equal to count fails found then
-    this program exit with zero otherwise exit with counted fails"""
+    this program exits with zero, otherwise exits with counted fails"""
     try:
         stats = run_pylint(
             list(paths), config_file.name,
