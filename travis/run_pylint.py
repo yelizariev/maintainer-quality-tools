@@ -204,8 +204,8 @@ def pylint_run(is_pr, version, dir):
         for module_changed in modules_changed:
             modules_changed_cmd.extend(['--path', module_changed])
         conf = ["--config-file=%s" % (pylint_rcfile_pr)]
-        travis_pull_request_slug = os.environ.get('TRAVIS_PULL_REQUEST_SLUG')
-        is_addons_dev = re.search(r'addons-dev', str(travis_pull_request_slug))
+        travis_repo_slug = os.environ.get('TRAVIS_REPO_SLUG')
+        is_addons_dev = re.search(r'addons-dev', str(travis_repo_slug))
         extra_params_cmd = get_extra_params(odoo_version, disable_pylint, is_addons_dev, is_pr)
         cmd = conf + modules_changed_cmd + extra_params_cmd
         if is_addons_dev:
