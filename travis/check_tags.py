@@ -55,10 +55,10 @@ def handler_commit(commit, symbol_in_branch, version):
     release_tag = list(set(list_tags) & set(RELEASE_TAGS))
     version_tags = list(set(list_tags) & set(VERSION_TAGS))
     if symbol_in_branch:
-        errors_dev = check_dev_branch_tags(release_tag, dev_tag, commit, list_tags)
+        errors_dev = check_dev_branch_tags(release_tag, dev_tag, commit)
         errors_commit.update(errors_dev)
     else:
-        errors_stable = check_stable_branch_tags(dev_tag, release_tag, commit, list_tags)
+        errors_stable = check_stable_branch_tags(dev_tag, release_tag, commit)
         errors_commit.update(errors_stable)
 
     if any(tag in REQUIREMENTS_TAGS_OF_VERSION for tag in list_tags):
@@ -73,29 +73,29 @@ def check_version_tags(version_tags, list_tags, commit, version):
         error = {commit: 'Must be Version tags!'}
         errors_version.update(error)
         return errors_version
-    # list of digit from tag's of commit
-    list_digits = [x.replace(':', '') for x in list_tags if x in VERSION_TAGS]
-    version_in_commit = ''
-    for digit in list_digits:
-        # calculates version in commit
-        version_in_commit += VERSION_TAGS_DICT.get(digit)
-    if version.replace(".", "") != version_in_commit:
-        error = {commit: 'Version in commit is wrong!'}
-        errors_version.update(error)
-        return errors_version
-    # list of indices (requirements of version's tags in commit)
-    index_requirements_tags_version = [list_tags.index(i) for i in list_tags if i in REQUIREMENTS_TAGS_OF_VERSION]
-    # list of indices (version's tags in commit)
-    index_verion_tags = [list_tags.index(i) for i in list_tags if i in VERSION_TAGS]
-    # Check proper order of tags in commit: comparison indices "requirements of versions tags" and "versions tags"
-    if not index_requirements_tags_version[-1] < index_verion_tags[0]:
-        error = {commit: 'Version tag must be after the main tag!'}
-        errors_version.update(error)
-        return errors_version
+    # # list of digit from tag's of commit
+    # list_digits = [x.replace(':', '') for x in list_tags if x in VERSION_TAGS]
+    # version_in_commit = ''
+    # for digit in list_digits:
+    #     # calculates version in commit
+    #     version_in_commit += VERSION_TAGS_DICT.get(digit)
+    # if version.replace(".", "") != version_in_commit:
+    #     error = {commit: 'Version in commit is wrong!'}
+    #     errors_version.update(error)
+    #     return errors_version
+    # # list of indices (requirements of version's tags in commit)
+    # index_requirements_tags_version = [list_tags.index(i) for i in list_tags if i in REQUIREMENTS_TAGS_OF_VERSION]
+    # # list of indices (version's tags in commit)
+    # index_verion_tags = [list_tags.index(i) for i in list_tags if i in VERSION_TAGS]
+    # # Check proper order of tags in commit: comparison indices "requirements of versions tags" and "versions tags"
+    # if not index_requirements_tags_version[-1] < index_verion_tags[0]:
+    #     error = {commit: 'Version tag must be after the main tag!'}
+    #     errors_version.update(error)
+    #     return errors_version
     return errors_version
 
 
-def check_dev_branch_tags(release_tag, dev_tag, commit, list_tags):
+def check_dev_branch_tags(release_tag, dev_tag, commit):
     errors_dev = {}
     if release_tag != []:
         error = {commit: 'You cannot use release tags in development branch!'}
@@ -113,7 +113,7 @@ def check_dev_branch_tags(release_tag, dev_tag, commit, list_tags):
     return errors_dev
 
 
-def check_stable_branch_tags(dev_tag, release_tag, commit, list_tags):
+def check_stable_branch_tags(dev_tag, release_tag, commit):
     errors_stable = {}
     if dev_tag != []:
         error = {commit: 'You cannot use Development tag in stable branch!'}
