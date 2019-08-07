@@ -25,6 +25,9 @@ if [ "${TESTS}" != "1" ] && [ "${LINT_CHECK}" == "1" ]; then
     exit 0
 fi
 
+if [ "${TESTS}" != "1" ] && [ "${CHECK_TAGS}" == "1" ]; then
+    exit 0
+fi
 
 # Install less
 ln -s `which nodejs` $HOME/maintainer-quality-tools/travis/node
