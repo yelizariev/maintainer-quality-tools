@@ -21,7 +21,7 @@ if [ "${LINT_CHECK}" != "0" ]; then
 fi
 
 if [ "${CHECK_TAGS}" != "0" ]; then
-    pip3 install requests
+    pip install requests
 fi
 
 # We can exit here and do nothing if this is only a LINT check
