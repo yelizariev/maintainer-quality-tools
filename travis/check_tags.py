@@ -22,9 +22,11 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
     # GET / repos /: owner /:repo / commits
     url_request = 'https://api.github.com/repos/%s/pulls/%s/commits' % (str(travis_repo_slug), str(travis_pull_request_number))
     if token:
-        commits = requests.get(url_request, headers={'Authorization': token}).json()
+        commits = requests.get(url_request, headers={'Authorization': token})
     else:
-        commits = requests.get(url_request).json()
+        commits = requests.get(url_request)
+    print('GITHUB API response for commits: %s\n%s', url_request, commits)
+    commits = commits.json()
     for commit in commits:
         commit = commit.get('commit').get('message')
         print('Commit: %s' % commit)
