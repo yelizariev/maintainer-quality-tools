@@ -39,11 +39,12 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
 def handler_commit(commit, symbol_in_branch, version):
     errors_commit = {}
     # looks tags starting at the beginning of the line and until first whitespace
-    match_tags_commit = re.search(r'^(:[^\s]+:)', commit).group(1)
+    match_tags_commit = re.search(r'^(:[^\s]+:)', commit)
     if not match_tags_commit:
         error = {commit: 'There are no tags in the commit!'}
         errors_commit.update(error)
         return errors_commit
+    match_tags_commit = match_tags_commit.group(1)
     # list of tags from match_tags_commit
     list_tags = re.findall(r'(:\w+:)', match_tags_commit)
     # list of tags that should not be in the commit
