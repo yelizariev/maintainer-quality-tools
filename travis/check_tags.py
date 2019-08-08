@@ -25,8 +25,11 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
         commits = requests.get(url_request, headers={'Authorization': token})
     else:
         commits = requests.get(url_request)
+    try:
+        commits = commits.json()
+    except:
+        pass
     print('GITHUB API response for commits: %s\n%s', url_request, commits)
-    commits = commits.json()
     for commit in commits:
         parents_commit = commit.get('parents')
         if len(parents_commit) > 1:
