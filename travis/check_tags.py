@@ -28,6 +28,10 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
     # print('GITHUB API response for commits: %s\n%s', url_request, commits)
     commits = commits.json()
     for commit in commits:
+        parents_commit = commit.get('parents')
+        if len(parents_commit) > 1:
+            # we don't check merge commits
+            continue
         commit = commit.get('commit').get('message')
         print('Commit: %s' % commit)
         if commit:
