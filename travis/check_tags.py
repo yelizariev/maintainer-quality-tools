@@ -38,6 +38,9 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
         commit = commit.get('commit').get('message')
         print('Commit: %s' % commit)
         if commit:
+            first_word = commit.split(' ', 1)[0]
+            if first_word == 'Revert':
+                continue
             errors_commit = handler_commit(commit, symbol_in_branch, version)
             real_errors.update(errors_commit)
     return real_errors
