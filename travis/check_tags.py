@@ -20,13 +20,8 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
     if not travis_pull_request_number or travis_pull_request_number == "false":
         return real_errors
     # GET / repos /: owner /:repo / commits
-    url_request = 'https://api.github.com/repos/%s/pulls/%s/commits' % (str(travis_repo_slug), str(travis_pull_request_number))
-    if token:
-        print("GITHUB_TOKEN=%s" % token[:3])
-        resp = requests.get(url_request, headers={'Authorization': 'token %s' % token})
-    else:
-        print("GITHUB_TOKEN is not provided!")
-        resp = requests.get(url_request)
+    url_request = 'https://github.it-projects.info/repos/%s/pulls/%s/commits' % (str(travis_repo_slug), str(travis_pull_request_number))
+    resp = requests.get(url_request)
     commits = resp.json()
     if resp.status_code != 200:
         print('GITHUB API response for commits: %s', [resp, resp.headers, commits])
