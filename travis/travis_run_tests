@@ -98,9 +98,6 @@ if __name__ == '__main__':
     if check_tags_enabled:
         tests.append(['test_check_tags.py'])
 
-    if transifex_enabled and is_valid_transifex:
-        tests.append(['travis_transifex.py'])
-
     if must_run_makepot:
         tests.append(['travis_makepot'])
 
