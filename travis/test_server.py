@@ -468,7 +468,7 @@ def main(argv=None):
     # no test error, let's generate .pot and msgmerge all .po files
     must_run_makepot = (
         os.environ.get('MAKEPOT') == '1'
-        and os.environ.get('TRAVIS_REPO_SLUG', '').startswith('OCA/')
+        and os.environ.get('TRAVIS_REPO_SLUG', '').startswith('it-projects-llc/')
         and (
             os.environ.get('TRAVIS_BRANCH')
             in ('8.0', '9.0', '10.0', '11.0', '12.0') 
