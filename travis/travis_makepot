@@ -76,6 +76,7 @@ def main(argv=None, database=None):
             '-d', database,
             '--msgmerge-if-new-pot',
             '--commit',
+            '--commit-message', ':alien: Update {addon_name}.pot\n\nDone by forked MQT: https://github.com/it-projects-llc/maintainer-quality-tools/',
             '--log-level=debug',
         ])
         if r:
