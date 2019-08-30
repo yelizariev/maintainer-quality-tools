@@ -11,10 +11,9 @@ token = os.environ.get('GITHUB_TOKEN')
 travis_pull_request_number = os.environ.get('TRAVIS_PULL_REQUEST')
 travis_repo_slug = os.environ.get('TRAVIS_REPO_SLUG')
 travis_branch = os.environ.get('TRAVIS_BRANCH')
-travis_build_dir = os.environ.get('TRAVIS_BUILD_DIR')
 error_msg = "Check guidelines: https://gitlab.com/itpp/handbook/blob/master/documenting-updates.md If you are not IT-Projects' employee, you can ignore it and we'll handle it by our own"
 exit_status = 0
-result = check_tags.get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis_branch, version, token, travis_build_dir)
+result = check_tags.get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis_branch, version, token)
 count_errors = len(result.keys())
 if count_errors > 0:
     for key, value in result.items():
