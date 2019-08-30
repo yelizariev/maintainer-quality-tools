@@ -1,6 +1,7 @@
 import re
 import requests
 
+from travis.getaddons import get_modules_changed
 
 DEVELOPMENT_TAGS = [':memo:', ':fire:', ':fire_engine:', ':tv:', ':lock:', ':bath:', ':green_heart:', ':cat:', ':bomb:']
 RELEASE_TAGS = [':tada:', ':zap:', ':sparkles:', ':rainbow:', ':ambulance:', ':heart_eyes:', ':cherries:', ':book:',
@@ -13,7 +14,7 @@ VERSION_TAGS = [':zero:', ':one:', ':two:', ':three:', ':four:', ':five:', ':six
 REQUIREMENTS_TAGS_OF_VERSION = [':x:', ':arrow_up:', ':arrow_down:', ':tada:']
 
 
-def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis_branch, version, token):
+def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis_branch, version, token, travis_build_dir):
     symbol_in_branch = re.search(r'-', str(travis_branch))
 
     #GET /repos/:owner/:repo/pulls/:pull_number/commits
@@ -38,12 +39,12 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
             first_word = commit.split(' ', 1)[0]
             if first_word == 'Revert':
                 continue
-            errors_commit = handler_commit(commit, symbol_in_branch, version)
+            errors_commit = handler_commit(commit, symbol_in_branch, version, travis_build_dir, travis_repo_slug, travis_pull_request_number, travis_branch)
             real_errors.update(errors_commit)
     return real_errors
 
 
-def handler_commit(commit, symbol_in_branch, version):
+def handler_commit(commit, symbol_in_branch, version, travis_build_dir, travis_repo_slug, travis_pull_request_number, travis_branch):
     errors_commit = {}
     # looks tags starting at the beginning of the line and until first whitespace
     match_tags_commit = re.search(r'^(:[^\s]+:)', commit)
@@ -69,13 +70,21 @@ def handler_commit(commit, symbol_in_branch, version):
         errors_commit.update(errors_dev)
     else:
         errors_stable = check_stable_branch_tags(dev_tag, release_tag, commit)
+        errors_stable_docs = check_stable_branch_docs(release_tag, commit, travis_build_dir, travis_repo_slug, travis_pull_request_number, travis_branch)
         errors_commit.update(errors_stable)
+        errors_commit.update(errors_stable_docs)
 
     if any(tag in REQUIREMENTS_TAGS_OF_VERSION for tag in list_tags):
         errors_version = check_version_tags(version_tags, list_tags, commit, version)
         errors_commit.update(errors_version)
     return errors_commit
 
+
+def check_stable_branch_docs(release_tag, commit, travis_build_dir, travis_repo_slug, travis_pull_request_number, travis_branch):
+    errors_stable_docs = {}
+    modules_changed = get_modules_changed(travis_build_dir)
+    print('-------------------------modules_changed:\n{}'.format(modules_changed))
+    return errors_stable_docs
 
 def check_version_tags(version_tags, list_tags, commit, version):
     errors_version = {}
