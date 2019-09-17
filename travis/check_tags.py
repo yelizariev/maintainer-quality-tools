@@ -134,7 +134,7 @@ def check_changelog_manifest_index_readme(commit_filename_versions):
 
 
 def check_changelog_version(filename, commit_msg, versions, i):
-    error_version_msg_value = 'If you use tag {} the version in the "{}" file must be changed to {}!'
+    error_version_msg_value = 'If you use tag {} the version in the "{}" file must be updated to {}!'
     error_version_msg_key = '{} commit: {}\nold version is {} and new version is {}'
     error_changelog = {}
     value_first_old, value_first_new = get_first_second_third_values(versions, first=True)
@@ -165,7 +165,7 @@ def get_change_changelog_index_readme_file(commit_msg, list_changed_files, chang
     error_change_changelog_manifest_index_readme = {}
     str_change_files = ', '.join(list_changed_files)
     list_readme_index = ['README.rst', 'doc/index.rst']
-    error_change_msg = 'If you use one of the tags {} - file(s) {} must be changed!'
+    error_change_msg = 'If you use one of the tags {} - file(s) {} must be updated!'
     if changelog not in str_change_files:
         error = {'{} commit: {}\nupdated files: {}\nnot updated file: {}'.format(i, commit_msg, str_change_files, changelog):
                 '{}'.format(error_change_msg).format(':sparkles:, :zap: or :ambulance:', changelog)}
