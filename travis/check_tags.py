@@ -223,6 +223,7 @@ def get_changed_version(commit_url):
                 filename_versions.update({filename: versions})
             if 'doc/changelog.rst' in filename:
                 versions = re.findall(r'(\d+.\d.\d)', patch)
+                versions = sorted(versions)
                 filename_versions.update({filename: versions})
             if 'doc/index.rst' in filename:
                 filename_versions.update({filename: 'Updated!'})
