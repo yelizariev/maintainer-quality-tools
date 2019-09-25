@@ -90,6 +90,8 @@ def check_stable_branch_docs(commit_url, sha_commits, travis_repo_slug, commits_
     commit_filename_versions, commit_manifest = get_changed_version(commit_url, commits_order)
     manifest_commits = {}
     for commit, manifest in commit_manifest:
+        if manifest is None:
+            continue
         manifest_commits.setdefault(manifest, [])
         manifest_commits[manifest].append(commit)
     # https://developer.github.com/v3/repos/commits/#compare-two-commits
@@ -253,14 +255,15 @@ def get_first_second_third_values(versions):
 
 
 def get_changed_version(commit_url, commits_order):
+    commits_order_filtered = []
+    for commit in commits_order:
+        if ':sparkles:' in commit or ':zap:' in commit or ':ambulance:' in commit:
+            commits_order_filtered.append(commit)
     tags = [':sparkles:', ':zap:', ':ambulance:']
     commit_filename_versions = {}
     commit_manifest = {}
-    i = 0
     for commit, url in commit_url.items():
-        # commit_manifest_list = []
         filename_versions = {}
-        i += 1
         url = url.replace('api.github.com', 'github.it-projects.info')
         commit_content = requests.get(url)
         commit_content = commit_content.json()
@@ -284,7 +287,7 @@ def get_changed_version(commit_url, commits_order):
             if 'README.rst' in filename:
                 filename_versions.update({filename: 'Updated!'})
         commit_filename_versions[commit_msg] = filename_versions
-    commit_manifest = list((i, commit_manifest.get(i)) for i in commits_order)
+    commit_manifest = list((i, commit_manifest.get(i)) for i in commits_order_filtered)
     return commit_filename_versions, commit_manifest
 
 
