@@ -28,6 +28,7 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
         print('GITHUB API response for commits: %s', [resp, resp.headers, commits])
     commit_url = {}
     sha_commits = []
+    commits_order = []
     for commit in commits:
         parents_commit = commit.get('parents')
         if len(parents_commit) > 1:
@@ -37,6 +38,7 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
         sha = commit.get('sha')
         commit = commit.get('commit').get('message')
         print('Commit: %s' % commit)
+        commits_order.append(commit)
         commit_url.update({commit: url_commit})
         sha_commits.append(sha)
         if commit:
@@ -45,7 +47,7 @@ def get_errors_msgs_commits(travis_repo_slug, travis_pull_request_number, travis
                 continue
             errors_commit = handler_commit(commit, symbol_in_branch, version)
             real_errors.update(errors_commit)
-    error_version_docs = check_stable_branch_docs(commit_url, sha_commits, travis_repo_slug)
+    error_version_docs = check_stable_branch_docs(commit_url, sha_commits, travis_repo_slug, commits_order)
     real_errors.update(error_version_docs)
     return real_errors
 
@@ -83,11 +85,11 @@ def handler_commit(commit, symbol_in_branch, version):
     return errors_commit
 
 
-def check_stable_branch_docs(commit_url, sha_commits, travis_repo_slug):
+def check_stable_branch_docs(commit_url, sha_commits, travis_repo_slug, commits_order):
     error_version_docs = {}
-    commit_filename_versions, commit_manifest = get_changed_version(commit_url)
+    commit_filename_versions, commit_manifest = get_changed_version(commit_url, commits_order)
     manifest_commits = {}
-    for commit, manifest in commit_manifest.items():
+    for commit, manifest in commit_manifest:
         manifest_commits.setdefault(manifest, [])
         manifest_commits[manifest].append(commit)
     # https://developer.github.com/v3/repos/commits/#compare-two-commits
@@ -250,10 +252,10 @@ def get_first_second_third_values(versions):
     return result
 
 
-def get_changed_version(commit_url):
+def get_changed_version(commit_url, commits_order):
     tags = [':sparkles:', ':zap:', ':ambulance:']
     commit_filename_versions = {}
-    commit_manifest = collections.OrderedDict()
+    commit_manifest = {}
     i = 0
     for commit, url in commit_url.items():
         # commit_manifest_list = []
@@ -282,6 +284,7 @@ def get_changed_version(commit_url):
             if 'README.rst' in filename:
                 filename_versions.update({filename: 'Updated!'})
         commit_filename_versions[commit_msg] = filename_versions
+    commit_manifest = list((i, commit_manifest.get(i)) for i in commits_order)
     return commit_filename_versions, commit_manifest
 
 
