@@ -96,11 +96,12 @@ def check_stable_branch_docs(commit_url, sha_commits, travis_repo_slug, commits_
         manifest_commits[manifest].append(commit)
     # https://developer.github.com/v3/repos/commits/#compare-two-commits
     manifest_version = get_manifest_version(travis_repo_slug, sha_commits)
-    for manifest, commit in manifest_commits.items():
-        versions = manifest_version.get(manifest)
-        str_commit = ', '.join(commit)
-        error_manifest = check_manifest_version(manifest, versions, str_commit)
-        error_version_docs.update(error_manifest)
+    if manifest_version != {}:
+        for manifest, commit in manifest_commits.items():
+            versions = manifest_version.get(manifest)
+            str_commit = ', '.join(commit)
+            error_manifest = check_manifest_version(manifest, versions, str_commit)
+            error_version_docs.update(error_manifest)
     error_changelog_index_readme = check_changelog_index_readme(commit_filename_versions)
     error_version_docs.update(error_changelog_index_readme)
     return error_version_docs
@@ -115,7 +116,7 @@ def check_changelog_index_readme(commit_filename_versions):
         error_changelog_manifest_index_readme.update(error_change_changelog_manifest_index_readme)
         error_changelog = {}
         for filename, versions in filename_versions.items():
-            if changelog not in filename:
+            if changelog not in filename or versions is not 'Updated!':
                 continue
             error_changelog = check_changelog_version(filename, commit_msg, versions)
             error_changelog.update(error_changelog)
@@ -128,8 +129,8 @@ def get_manifest_version(travis_repo_slug, sha_commits):
     sha_start = sha_commits[0]
     sha_end = sha_commits[-1]
     # GET /repos/:owner/:repo/compare/:base...:head
-    url_request = 'https://github.it-projects.info/repos/%s/compare/%s...%s' % (
-                            str(travis_repo_slug), str(sha_start),  str(sha_end))
+    url_request = 'https://github.it-projects.info/repos/{}/compare/{}~1...{}'.format(
+        str(travis_repo_slug), str(sha_start),  str(sha_end))
     resp = requests.get(url_request)
     compare = resp.json()
     if resp.status_code != 200:
