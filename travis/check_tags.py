@@ -87,12 +87,7 @@ def handler_commit(commit, symbol_in_branch, version):
 
 def check_stable_branch_docs(commit_url, sha_commits, travis_repo_slug, commits_order):
     error_version_docs = {}
-    error_changelog_msg_value = 'If you use one of tags :sparkles:, :zap: or :ambulance: the version in the changelog must be updated!'
-    error_changelog_msg_key = 'commit: {}\nchangelog: {}'
-    commit_filename_versions, commit_manifest, error_update_of_version_changlog = get_changed_version(commit_url, commits_order)
-    for commit, changelog in error_update_of_version_changlog.items():
-        error_changelog = {error_changelog_msg_key.format(commit, changelog): error_changelog_msg_value}
-        error_version_docs.update(error_changelog)
+    commit_filename_versions, commit_manifest = get_changed_version(commit_url, commits_order)
     manifest_commits = {}
     for commit, manifest in commit_manifest:
         if manifest is None:
@@ -116,8 +111,8 @@ def check_changelog_index_readme(commit_filename_versions):
     error_changelog_manifest_index_readme = {}
     for commit_msg, filename_versions in commit_filename_versions.items():
         list_changed_files = [filename for filename in filename_versions.keys()]
-        error_change_index_readme = get_change_index_readme_file(commit_msg, list_changed_files)
-        error_changelog_manifest_index_readme.update(error_change_index_readme)
+        error_change_changelog_manifest_index_readme = get_change_changelog_index_readme_file(commit_msg, list_changed_files, changelog)
+        error_changelog_manifest_index_readme.update(error_change_changelog_manifest_index_readme)
         error_changelog = {}
         for filename, versions in filename_versions.items():
             if changelog not in filename:
@@ -225,10 +220,11 @@ def check_changelog_version(filename, commit_msg, versions):
     return error_changelog
 
 
-def get_change_index_readme_file(commit_msg, list_changed_files):
+def get_change_changelog_index_readme_file(commit_msg, list_changed_files, changelog):
     error_change_changelog_manifest_index_readme = {}
-    tags = [':sparkles:', ':zap:']
+    tags = [':sparkles:', ':zap:', ':ambulance:']
     str_tags = ' or '.join(tags)
+    srt_tags_readme_index = ' or '.join(tags[:-1])
     str_change_files = ', '.join(list_changed_files)
     list_readme_index = ['README.rst', 'doc/index.rst']
     str_readme_index = ' or '.join(list_readme_index)
@@ -237,14 +233,20 @@ def get_change_index_readme_file(commit_msg, list_changed_files):
     release_tag = list(set(list_tags) & set(tags))
     if release_tag == []:
         return error_change_changelog_manifest_index_readme
-    error_index_redme = {}
-    if 'README.rst' in str_change_files or 'doc/index.rst' in str_change_files:
-        pass
-    else:
-        error = {'commit: {}\nupdated files: {}\nnot updated file: {}'.format(commit_msg, str_change_files, str_readme_index):
-                '{}'.format(error_change_msg).format(str_tags, ' or '.join(list_readme_index))}
-        error_index_redme.update(error)
-    error_change_changelog_manifest_index_readme.update(error_index_redme)
+    if changelog not in str_change_files:
+        error = {
+            'commit: {}\nupdated files: {}\nnot updated file: {}'.format(commit_msg, str_change_files, changelog):
+                '{}'.format(error_change_msg).format(str_tags, changelog)}
+        error_change_changelog_manifest_index_readme.update(error)
+    if ':ambulance:' not in release_tag:
+        error_index_redme = {}
+        if 'README.rst' in str_change_files or 'doc/index.rst' in str_change_files:
+            pass
+        else:
+            error = {'commit: {}\nupdated files: {}\nnot updated file: {}'.format(commit_msg, str_change_files, str_readme_index):
+                    '{}'.format(error_change_msg).format(srt_tags_readme_index, ' or '.join(list_readme_index))}
+            error_index_redme.update(error)
+        error_change_changelog_manifest_index_readme.update(error_index_redme)
     return error_change_changelog_manifest_index_readme
 
 
@@ -264,7 +266,6 @@ def get_changed_version(commit_url, commits_order):
     tags = [':sparkles:', ':zap:', ':ambulance:']
     commit_filename_versions = {}
     commit_manifest = {}
-    error_update_of_version_changlog = {}
     for commit, url in commit_url.items():
         filename_versions = {}
         url = url.replace('api.github.com', 'github.it-projects.info')
@@ -292,15 +293,13 @@ def get_changed_version(commit_url, commits_order):
                     versions = [update_of_version_from_patch, versions[1]]
                     versions = sorted(versions)
                     filename_versions.update({filename: versions})
-                else:
-                    error_update_of_version_changlog.update({commit: filename})
             if 'doc/index.rst' in filename:
                 filename_versions.update({filename: 'Updated!'})
             if 'README.rst' in filename:
                 filename_versions.update({filename: 'Updated!'})
         commit_filename_versions[commit_msg] = filename_versions
     commit_manifest = list((i, commit_manifest.get(i)) for i in commits_order_filtered)
-    return commit_filename_versions, commit_manifest, error_update_of_version_changlog
+    return commit_filename_versions, commit_manifest
 
 
 def check_version_tags(version_tags, list_tags, commit, version):
