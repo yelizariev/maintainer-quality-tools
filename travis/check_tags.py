@@ -293,6 +293,8 @@ def get_changed_version(commit_url, commits_order):
                     versions = [update_of_version_from_patch, versions[1]]
                     versions = sorted(versions)
                     filename_versions.update({filename: versions})
+                else:
+                    filename_versions.update({filename: 'Updated!'})
             if 'doc/index.rst' in filename:
                 filename_versions.update({filename: 'Updated!'})
             if 'README.rst' in filename:
