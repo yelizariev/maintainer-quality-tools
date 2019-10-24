@@ -161,7 +161,7 @@ def check_manifest_version(manifest, versions, str_commit):
     for tag in match_tags_commit:
         if tag == ':sparkles:':
             value_first_old, value_second_old, value_third_old, value_first_new,  value_second_new,  value_third_new = get_first_second_third_values(versions_need)
-            if value_first_new <= or value_second_new != 0 or value_third_new != 0:
+            if value_first_new <= value_first_old or value_second_new != 0 or value_third_new != 0:
                 version_true = '{}.{}.{}.{}'.format(base_version, "(" + str(value_first_old) + " + \{NUMBER_OF_NEW_FEATURES\})", 0, 0)
                 if error_indicator:
                     versions_need = [versions_need[-1], version_true]
